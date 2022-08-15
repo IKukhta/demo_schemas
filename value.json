@@ -1,0 +1,213 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$ref": "#/definitions/Value",
+  "definitions": {
+    "CTI": {
+      "description": "TODO",
+      "type": "string"
+    },
+    "ValueMap": {
+      "type": "object",
+      "additionalProperties": { "#ref": "#/definitions/Value" }
+    },
+    "ConstValue": {
+      "description": "TODO it is not generic, but actually generic type implied",
+      "type": "string"
+    },
+    "RefValue": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      ],
+      "description": "Instance IDs of single/multiple instances to inherit as a field value.\nIf an array of instance IDs is provided, the resulting field value is an array\n"
+    },
+    "GroupRefValue": {
+      "description": "Inherit an array of instances with matching 'group' value\n",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "order"
+      ],
+      "properties": {
+        "id": true,
+        "order": {
+          "description": "The field and direction (asc/desc) to order the instance array",
+          "type": "string"
+        }
+      }
+    },
+    "RangeRefValue": {
+      "description": "Inherit an array of instances by ranging over the input array.\nEach instance will receive an array element (.elem) to use in resolution\n",
+      "additionalProperties": true,
+      "required": [
+        "input",
+        "id"
+      ],
+      "properties": {
+        "input": {
+          "description": "The input array",
+          "$ref": "#/definitions/Value"
+        },
+        "id": {
+          "description": "The id of the instance to use for array element resolution",
+          "$ref": "#/definitions/Value"
+        },
+        "order": {
+          "description": "The field and direction (asc/desc) to order the instance array",
+          "type": "string"
+        }
+      }
+    },
+    "GraphQLValue": {
+      "type": "object",
+      "description": "Value obtained by GraphQL request",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "selection_set",
+        "data"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "GraphQL operation type",
+          "enum": [
+            "QUERY",
+            "MUTATION"
+          ],
+          "default": "QUERY"
+        },
+        "name": {
+          "type": "string",
+          "description": "GraphQL operation name"
+        },
+        "selection_set": {
+          "type": "string",
+          "description": "GraphQL selection set"
+        },
+        "data": {
+          "type": "object",
+          "description": "Map of data parameter fields for GraphQL request.\nAll value functionality can be used\n",
+          "additionalProperties": true
+        },
+        "jq": {
+          "type": "string",
+          "description": "A JQ expression to transform GraphQL response"
+        },
+        "cel": {
+          "type": "string",
+          "description": "A CEL expression to transform GraphQL response"
+        }
+      }
+    },
+    "HTTPValue": {
+      "description": "Value obtained by HTTP request",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "query",
+        "body"
+      ],
+      "properties": {
+        "service": {
+          "type": "string",
+          "description": "Name of service to make HTTP request against.\nIf not provided, the full url field is used and Authorization header is not provided\n"
+        },
+        "method": {
+          "type": "string",
+          "description": "HTTP request method",
+          "enum": [
+            "GET",
+            "POST",
+            "PUT"
+          ],
+          "default": "GET"
+        },
+        "url": {
+          "description": "HTTP request URL. If a service is provided, it is expected to be the url path",
+          "type": "string"
+        },
+        "query": {
+          "description": "HTTP request query parameters. All value functionality can be used",
+          "$ref": "#/definitions/ValueMap"
+        },
+        "body": {
+          "description": "HTTP request body. All value functionality can be used",
+          "$ref": "#/definitions/Value"
+        },
+        "headers": {
+          "description": "HTTP request headers. All value functionality can be used",
+          "$ref": "#/definitions/ValueMap"
+        },
+        "jq": {
+          "description": "A JQ expression to transform HTTP response",
+          "type": "string"
+        },
+        "cel": {
+          "description": "A CEL expression to transform HTTP response",
+          "type": "string"
+        }
+      }
+    },
+    "PresentationValue": {
+      "description": "Value obtained by Presentation Service request",
+      "additionalProperties": false,
+      "required": [ "template" ],
+      "properties": {
+        "key": {
+          "description": "Display object key to resolve (if 'template' not provided)",
+          "type": "string" 
+        },
+        "template": {
+          "description": "Raw template string (if 'key' not provided)",
+          "type": "string"
+        },
+        "dictionaries": {
+          "description": "Dictionaries to use for localization",
+          "type": "array",
+          "items": { "types": "string" }
+        },
+        "context": {
+          "description": "Additional context for template resolution. All value functionality can be used",
+          "$ref": "#/definitions/ValueMap"
+        },
+        "jq": {
+          "description": "A JQ expression to transform presentation response",
+          "$ref": "#/definitions/JQValue"
+        },
+        "cel": {
+          "description": "A CEL expression to transform presentation response",
+          "$ref": "#/definitions/CELValue"
+        }
+      }
+    },
+    "JQValue": {
+      "description": "Value obtained by JQ expression",
+      "type": "string"
+    },
+    "CELValue": {
+      "description": "Value obtained by CEL expression",
+      "type": "string"
+    },
+    "Value": {
+      "$recursiveAnchor": true,
+      "additionalProperties": false,
+      "oneOf": [
+       { "required": [ "const" ],        "properties": { "const":        { "$ref": "#/definitions/ConstValue"        } } },
+       { "required": [ "ref" ],          "properties": { "ref":          { "$ref": "#/definitions/RefValue"          } } },
+       { "required": [ "group_ref" ],    "properties": { "group_ref":    { "$ref": "#/definitions/GroupRefValue"     } } },
+       { "required": [ "range_ref" ],    "properties": { "range_ref":    { "$ref": "#/definitions/RangeRefValue"     } } },
+       { "required": [ "graphql" ],      "properties": { "graphql":      { "$ref": "#/definitions/GraphQLValue"      } } },
+       { "required": [ "http" ],         "properties": { "http":         { "$ref": "#/definitions/HTTPValue"         } } },
+       { "required": [ "presentation" ], "properties": { "presentation": { "$ref": "#/definitions/PresentationValue" } } },
+       { "required": [ "jq" ],           "properties": { "jq":           { "$ref": "#/definitions/JQValue"           } } },
+       { "required": [ "cel" ],          "properties": { "cel":          { "$ref": "#/definitions/CELValue"          } } }
+      ]
+    }
+  }
+}
